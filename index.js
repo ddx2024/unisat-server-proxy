@@ -1,9 +1,9 @@
 const express = require('express');
 const {createProxyMiddleware} = require('http-proxy-middleware');
 const Client = require('bitcoin-core');
+const https = require('https')
 const client = new Client({network: 'regtest', port: 18443, username: '111111', password: '111111'});
 const app = express();
-app.use(express.json());
 
 // 要代理的服务器地址
 const target = 'https://wallet-api.unisat.io/v5';
@@ -12,126 +12,135 @@ const target = 'https://wallet-api.unisat.io/v5';
 const proxy = createProxyMiddleware({
     target: target,
     changeOrigin: true,
+    headers: {
+        Connection: "keep-alive"
+    },
+    agent: new https.Agent(),
+    logLevel: 'debug',
+    onError: (err, req, res) => {
+        console.error('Proxy Error:', err);
+        res.status(500).send('Proxy Error');
+    },
 });
 
 // 特定请求的处理
 app.get('/v5/address/balance', (req, res) => {
-    res.json({
-        "code": 0,
-        "msg": "ok",
-        "data": {
-            "confirm_amount": "10000.00000000",
-            "pending_amount": "0.00000000",
-            "amount": "10000.00000000",
-            "confirm_btc_amount": "10000.00000000",
-            "pending_btc_amount": "10000.00000000",
-            "btc_amount": "10000.00000000",
-            "confirm_inscription_amount": "10000.00000000",
-            "pending_inscription_amount": "10000.00000000",
-            "inscription_amount": "10000.00000000",
-            "usd_value": "0"
-        }
+
+    const queryParams = req.query;
+    const address = queryParams.address;
+    const action = "start";
+    const scanObjects = [`addr(${address})`]; // 用你要扫描的实际地址替换这里的地址
+    client.command('scantxoutset', action, scanObjects).then((response) => {
+        res.json({
+            "code": 0,
+            "msg": "ok",
+            "data": {
+                "confirm_amount": "0.00000000",
+                "pending_amount": "0.00000000",
+                "amount": response.total_amount ? response.total_amount : '0.00000000',
+                "confirm_btc_amount": "0.00000000",
+                "pending_btc_amount": "0.00000000",
+                "btc_amount": "0.00000000",
+                "confirm_inscription_amount": "0.00000000",
+                "pending_inscription_amount": "0.00000000",
+                "inscription_amount": "0.00000000",
+                "usd_value": "0"
+            }
+        });
+    }).catch((error) => {
+        console.error(error);
+        res.json({
+            "code": -1,
+            "msg": error
+        });
     });
 });
 
 
 app.get('/v5/address/btc-utxo', (req, res) => {
-    res.json({
-        "code": 0,
-        "msg": "ok",
-        "data": [
-            {
-                "txid": "f9f557e8b78f41c05b26adc2ff4a6b1709c8e35d15ff4c6726f4856855db47be",
-                "vout": 1,
-                "satoshis": 1000000000,
-                "scriptPk": "0014059ce0647de86cf966dfa4656a08530eb8f26772",
-                "addressType": 1,
-                "inscriptions": [],
-                "atomicals": [],
-                "runes": [],
-                "pubkey": "",
-                "height": 2864256
-            }
-        ]
-    });
-});
-
-
-app.post('/v5/tx/decode2', (req, res) => {
-    res.json({
-        "code": 0,
-        "msg": "ok",
-        "data": {
-            "inputInfos": [
-                {
-                    "txid": "f9f557e8b78f41c05b26adc2ff4a6b1709c8e35d15ff4c6726f4856855db47be",
-                    "vout": 1,
-                    "address": "bcrt1qqkwwqeraapk0jekl53jk5zznp6u0yemjlkemds",
-                    "value": 1000000000,
+    const queryParams = req.query;
+    const address = queryParams.address;
+    const action = "start";
+    const scanObjects = [`addr(${address})`]; // 用你要扫描的实际地址替换这里的地址
+    client.command('scantxoutset', action, scanObjects).then((response) => {
+        if (response && response.unspents) {
+            const data = response.unspents.map(item => {
+                return {
+                    "txid": item.txid,
+                    "vout": item.vout,
+                    "satoshis": Math.round(item.amount * 100000000),
+                    "scriptPk": item.scriptPubKey,
+                    "addressType": 1,
                     "inscriptions": [],
                     "atomicals": [],
                     "runes": [],
-                    "onchain": false,
-                    "utxoStatus": {
-                        "utxoFound": false,
-                        "atomicalsChecked": false,
-                        "inscriptionDoubleChecked": false,
-                        "isConfirmed": false,
-                        "runesChecked": false,
-                        "indexerChecked": true
-                    },
-                    "height": 0
+                    "pubkey": "",
+                    "height": item.height
                 }
-            ],
-            "outputInfos": [
-                {
-                    "address": "bc1qldqsel08fzffxmxswumelqfe0vtcjel2k4pmhu",
-                    "value": 100000000,
-                    "inscriptions": [],
-                    "atomicals": [],
-                    "runes": [],
-                    "isOpReturn": false
-                },
-                {
-                    "address": "bc1qqkwwqeraapk0jekl53jk5zznp6u0yemjhem9p2",
-                    "value": 899999859,
-                    "inscriptions": [],
-                    "atomicals": [],
-                    "runes": [],
-                    "isOpReturn": false
-                }
-            ],
-            "feeRate": "1.0",
-            "fee": 141,
-            "isCompleted": true,
-            "risks": [],
-            "features": {
-                "rbf": false
-            },
-            "inscriptions": {},
-            "recommendedFeeRate": 9,
-            "shouldWarnFeeRate": true
+            })
+            res.json({
+                "code": 0,
+                "msg": "ok",
+                "data": data
+            });
         }
+    }).catch((error) => {
+        console.error(error);
+        res.json({
+            "code": -1,
+            "msg": error
+        });
     });
 });
+
 
 app.post('/v5/tx/broadcast', (req, res) => {
+    // 暂存接收到的数据
+    let rawData = '';
 
-
-
-    client.sendRawTransaction(req.body.rawtx).then(res => console.log(res))
-
-    res.json({
-        "code": 0,
-        "msg": "ok"
+    // 接收数据片段
+    req.on('data', chunk => {
+        rawData += chunk;
     });
+
+    // 数据接收完毕
+    req.on('end', () => {
+        try {
+            // 尝试解析 JSON
+            const parsedData = JSON.parse(rawData);
+            client.sendRawTransaction(parsedData.rawtx).then(data => {
+                console.log(data);
+                res.json({
+                    "code": 0,
+                    "msg": "ok"
+                });
+                client.generateToAddress(1, 'bcrt1qldqsel08fzffxmxswumelqfe0vtcjel276r9mx').then(res => {
+                    console.log('res', res)
+                })
+            }).catch(error => {
+                console.error(error)
+                res.json({
+                    "code": -1,
+                    "msg": error
+                });
+            })
+        } catch (error) {
+            console.error(error)
+            res.json({
+                "code": -1,
+                "msg": error
+            });
+        }
+    });
+
 });
 
 
 // 将代理中间件挂载到路由上
 app.use('/v5', proxy);
+app.use(express.json());
 
 // 启动服务器
 app.listen(3009, () => {
-    console.log('Proxy server is running on port 3000');
+    console.log('Proxy server is running on port 3009');
 });
