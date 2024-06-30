@@ -2,7 +2,11 @@ const express = require('express');
 const {createProxyMiddleware} = require('http-proxy-middleware');
 const Client = require('bitcoin-core');
 const https = require('https')
-const client = new Client({network: 'regtest', port: 18443, username: '111111', password: '111111'});
+const client = new Client({network: 'regtest'
+    , port: 18443
+    , host: 'ec2-3-15-141-150.us-east-2.compute.amazonaws.com'
+    , username: '111111'
+    , password: '111111'});
 const app = express();
 
 // 要代理的服务器地址
