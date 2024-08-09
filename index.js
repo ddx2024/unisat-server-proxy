@@ -2,14 +2,16 @@ const express = require('express');
 const { createProxyMiddleware } = require('http-proxy-middleware');
 const Client = require('bitcoin-core');
 const https = require('https')
+const cors = require('cors');
 const client = new Client({
-  network: 'regtest'
-  , port: 18443
-  , host: 'ec2-3-15-141-150.us-east-2.compute.amazonaws.com'
-  , username: 'cookie'
-  , password: 'd47161c4412c92d62030bb47e8255d9fb8129e4f625cafd926337c83c5212fc5',
+  network: 'regtest',
+  port: 18443,
+  host: 'ec2-3-15-141-150.us-east-2.compute.amazonaws.com',
+  username: '111111',
+  password: '111111',
 });
 const app = express();
+app.use(cors());
 
 // 要代理的服务器地址
 const target = 'https://wallet-api.unisat.io/v5';
@@ -34,6 +36,7 @@ function convertBtcKvBToSatoshiPerByte(btcPerKvB) {
   const satoshiPerByte = satoshiPerKB / 1000; // 从 satoshi/kB 转换为 satoshi/byte
   return satoshiPerByte;
 }
+
 
 // 特定请求的处理
 app.get('/v5/address/balance', (req, res) => {
@@ -68,7 +71,6 @@ app.get('/v5/address/balance', (req, res) => {
   });
 });
 
-
 app.get('/v5/address/btc-utxo', (req, res) => {
   const queryParams = req.query;
   const address = queryParams.address;
@@ -78,16 +80,8 @@ app.get('/v5/address/btc-utxo', (req, res) => {
     if (response && response.unspents) {
       const data = response.unspents.map(item => {
         return {
-          "txid": item.txid,
-          "vout": item.vout,
-          "satoshis": Math.round(item.amount * 100000000),
-          "scriptPk": item.scriptPubKey,
-          "addressType": 1,
-          "inscriptions": [],
-          "atomicals": [],
-          "runes": [],
-          "pubkey": "",
-          "height": item.height,
+          ...item,
+          value: Math.round(item.amount * 1e8),
         }
       })
       res.json({
