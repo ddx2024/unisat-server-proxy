@@ -4,7 +4,7 @@ const Client = require('bitcoin-core');
 const https = require('https')
 const client = new Client({network: 'regtest'
   , port: 18443
-  , host: 'localhost'
+  , host: 'ec2-3-15-141-150.us-east-2.compute.amazonaws.com'
   , username: '111111'
   , password: '111111'});
 const app = express();
@@ -116,6 +116,7 @@ app.post('/v5/tx/broadcast', (req, res) => {
         console.log(data);
         res.json({
           "code": 0,
+          data,
           "msg": "ok"
         });
         client.generateToAddress(1, 'bcrt1qldqsel08fzffxmxswumelqfe0vtcjel276r9mx').then(res => {
