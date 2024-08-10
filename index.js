@@ -31,6 +31,12 @@ const proxy = createProxyMiddleware({
   },
 });
 
+function convertBtcKvBToSatoshiPerByte(btcPerKvB) {
+  const satoshiPerKB = btcPerKvB * 100000000; // 从 BTC/kvB 转换为 satoshi/kB
+  const satoshiPerByte = satoshiPerKB / 1000; // 从 satoshi/kB 转换为 satoshi/byte
+  return satoshiPerByte;
+}
+
 // 特定请求的处理
 app.get('/v5/address/balance', (req, res) => {
 
@@ -74,16 +80,8 @@ app.get('/v5/address/btc-utxo', (req, res) => {
     if (response && response.unspents) {
       const data = response.unspents.map(item => {
         return {
-          "txid": item.txid,
-          "vout": item.vout,
-          "satoshis": Math.round(item.amount * 100000000),
-          "scriptPk": item.scriptPubKey,
-          "addressType": 1,
-          "inscriptions": [],
-          "atomicals": [],
-          "runes": [],
-          "pubkey": "",
-          "height": item.height
+          ...item,
+          value: Math.round(item.amount * 1e8),
         }
       })
       res.json({
@@ -123,7 +121,7 @@ app.post('/v5/tx/broadcast', (req, res) => {
           data,
         });
         client.generateToAddress(10, 'bcrt1qldqsel08fzffxmxswumelqfe0vtcjel276r9mx').then(res => {
-          console.log('res', res)
+          console.log('miner 10 done')
         })
       }).catch(error => {
         console.error(error)
@@ -236,7 +234,6 @@ app.get('/v5/address/summary', (req, res) => {
   });
 });
 
-
 app.get('/v5/default/fee-summary', (req, res) => {
   res.json({
     "code": 0,
@@ -261,6 +258,23 @@ app.get('/v5/default/fee-summary', (req, res) => {
       ]
     }
   });
+});
+
+app.get('/v5/getBTCTipHeight', async (req, res) => {
+  const blockchainInfo = await client.getBlockchainInfo();
+  return res.text(blockchainInfo.blocks);
+})
+
+app.get('/v5/getNetworkFees', async (req, res) => {
+  const fees = await client.estimateSmartFee(6);
+  const satoshis = convertBtcKvBToSatoshiPerByte(fees.feerate);
+  return {
+    fastestFee: satoshis || 1000, // Convert appropriately if needed 0.01
+    halfHourFee: satoshis,
+    hourFee: satoshis,
+    economyFee: satoshis,
+    minimumFee: satoshis,
+  };
 });
 
 
