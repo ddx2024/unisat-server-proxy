@@ -1,17 +1,15 @@
 const express = require('express');
 const {createProxyMiddleware} = require('http-proxy-middleware');
 const Client = require('bitcoin-core');
-const https = require('https');
+const https = require('https')
 const cors = require('cors');
-
 const client = new Client({
-  network: 'regtest',
-  port: 18443,
-  host: 'ec2-3-15-141-150.us-east-2.compute.amazonaws.com',
-  username: '111111',
-  password: '111111'
+  network: 'regtest'
+  , port: 18443
+  , host: 'ec2-3-15-141-150.us-east-2.compute.amazonaws.com'
+  , username: '111111'
+  , password: '111111'
 });
-
 const app = express();
 app.use(cors());
 
@@ -279,6 +277,29 @@ app.get('/v5/getNetworkFees', async (req, res) => {
   };
 });
 
+
+app.get('/getBTCTipHeight', async (req, res) => {
+  const blockchainInfo = await client.getBlockchainInfo();
+  return res.text(blockchainInfo.blocks);
+})
+
+app.get('/getNetworkFees', async (req, res) => {
+  const fees = await client.estimateSmartFee(6);
+  const satoshis = convertBtcKvBToSatoshiPerByte(fees.feerate);
+  return {
+    fastestFee: satoshis || 1000, // Convert appropriately if needed 0.01
+    halfHourFee: satoshis,
+    hourFee: satoshis,
+    economyFee: satoshis,
+    minimumFee: satoshis,
+  };
+})
+
+function convertBtcKvBToSatoshiPerByte(btcPerKvB) {
+  const satoshiPerKB = btcPerKvB * 100000000; // 从 BTC/kvB 转换为 satoshi/kB
+  const satoshiPerByte = satoshiPerKB / 1000; // 从 satoshi/kB 转换为 satoshi/byte
+  return satoshiPerByte;
+}
 
 // 将代理中间件挂载到路由上
 app.use('/v5', proxy);
