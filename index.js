@@ -1,17 +1,13 @@
 const express = require('express');
-const { createProxyMiddleware } = require('http-proxy-middleware');
+const {createProxyMiddleware} = require('http-proxy-middleware');
 const Client = require('bitcoin-core');
 const https = require('https')
-const cors = require('cors');
-const client = new Client({
-  network: 'regtest',
-  port: 18443,
-  host: 'ec2-3-15-141-150.us-east-2.compute.amazonaws.com',
-  username: '111111',
-  password: '111111',
-});
+const client = new Client({network: 'regtest'
+  , port: 18443
+  , host: 'localhost'
+  , username: '111111'
+  , password: '111111'});
 const app = express();
-app.use(cors());
 
 // 要代理的服务器地址
 const target = 'https://wallet-api.unisat.io/v5';
@@ -21,7 +17,7 @@ const proxy = createProxyMiddleware({
   target: target,
   changeOrigin: true,
   headers: {
-    Connection: "keep-alive",
+    Connection: "keep-alive"
   },
   agent: new https.Agent(),
   logLevel: 'debug',
@@ -30,13 +26,6 @@ const proxy = createProxyMiddleware({
     res.status(500).send('Proxy Error');
   },
 });
-
-function convertBtcKvBToSatoshiPerByte(btcPerKvB) {
-  const satoshiPerKB = btcPerKvB * 100000000; // 从 BTC/kvB 转换为 satoshi/kB
-  const satoshiPerByte = satoshiPerKB / 1000; // 从 satoshi/kB 转换为 satoshi/byte
-  return satoshiPerByte;
-}
-
 
 // 特定请求的处理
 app.get('/v5/address/balance', (req, res) => {
@@ -59,17 +48,18 @@ app.get('/v5/address/balance', (req, res) => {
         "confirm_inscription_amount": "0.00000000",
         "pending_inscription_amount": "0.00000000",
         "inscription_amount": "0.00000000",
-        "usd_value": "0",
-      },
+        "usd_value": "0"
+      }
     });
   }).catch((error) => {
     console.error(error);
     res.json({
       "code": -1,
-      "msg": error,
+      "msg": error
     });
   });
 });
+
 
 app.get('/v5/address/btc-utxo', (req, res) => {
   const queryParams = req.query;
@@ -80,21 +70,29 @@ app.get('/v5/address/btc-utxo', (req, res) => {
     if (response && response.unspents) {
       const data = response.unspents.map(item => {
         return {
-          ...item,
-          value: Math.round(item.amount * 1e8),
+          "txid": item.txid,
+          "vout": item.vout,
+          "satoshis": Math.round(item.amount * 100000000),
+          "scriptPk": item.scriptPubKey,
+          "addressType": 1,
+          "inscriptions": [],
+          "atomicals": [],
+          "runes": [],
+          "pubkey": "",
+          "height": item.height
         }
       })
       res.json({
         "code": 0,
         "msg": "ok",
-        "data": data,
+        "data": data
       });
     }
   }).catch((error) => {
     console.error(error);
     res.json({
       "code": -1,
-      "msg": error,
+      "msg": error
     });
   });
 });
@@ -118,7 +116,7 @@ app.post('/v5/tx/broadcast', (req, res) => {
         console.log(data);
         res.json({
           "code": 0,
-          "msg": "ok",
+          "msg": "ok"
         });
         client.generateToAddress(1, 'bcrt1qldqsel08fzffxmxswumelqfe0vtcjel276r9mx').then(res => {
           console.log('res', res)
@@ -127,36 +125,139 @@ app.post('/v5/tx/broadcast', (req, res) => {
         console.error(error)
         res.json({
           "code": -1,
-          "msg": error,
+          "msg": error
         });
       })
     } catch (error) {
       console.error(error)
       res.json({
         "code": -1,
-        "msg": error,
+        "msg": error
       });
     }
   });
 
 });
 
-app.get('/getBTCTipHeight', async (req, res) => {
-  const blockchainInfo = await client.getBlockchainInfo();
-  return res.text(blockchainInfo.blocks);
-})
+app.get('/v5/address/multi-assets', (req, res) => {
+  res.json({
+    "code": 0,
+    "msg": "ok",
+    "data": [
+      {
+        "totalSatoshis": 0,
+        "btcSatoshis": 0,
+        "assetSatoshis": 0,
+        "inscriptionCount": 0,
+        "atomicalsCount": 0,
+        "brc20Count": 0,
+        "brc20Count5Byte": 0,
+        "arc20Count": 0,
+        "runesCount": 0
+      },
+      {
+        "totalSatoshis": 0,
+        "btcSatoshis": 0,
+        "assetSatoshis": 0,
+        "inscriptionCount": 0,
+        "atomicalsCount": 0,
+        "brc20Count": 0,
+        "brc20Count5Byte": 0,
+        "arc20Count": 0,
+        "runesCount": 0
+      },
+      {
+        "totalSatoshis": 0,
+        "btcSatoshis": 0,
+        "assetSatoshis": 0,
+        "inscriptionCount": 0,
+        "atomicalsCount": 0,
+        "brc20Count": 0,
+        "brc20Count5Byte": 0,
+        "arc20Count": 0,
+        "runesCount": 0
+      },
+      {
+        "totalSatoshis": 0,
+        "btcSatoshis": 0,
+        "assetSatoshis": 0,
+        "inscriptionCount": 0,
+        "atomicalsCount": 0,
+        "brc20Count": 0,
+        "brc20Count5Byte": 0,
+        "arc20Count": 0,
+        "runesCount": 0
+      },
+      {
+        "totalSatoshis": 0,
+        "btcSatoshis": 0,
+        "assetSatoshis": 0,
+        "inscriptionCount": 0,
+        "atomicalsCount": 0,
+        "brc20Count": 0,
+        "brc20Count5Byte": 0,
+        "arc20Count": 0,
+        "runesCount": 0
+      },
+      {
+        "totalSatoshis": 0,
+        "btcSatoshis": 0,
+        "assetSatoshis": 0,
+        "inscriptionCount": 0,
+        "atomicalsCount": 0,
+        "brc20Count": 0,
+        "brc20Count5Byte": 0,
+        "arc20Count": 0,
+        "runesCount": 0
+      }
+    ]
+  });
+});
 
-app.get('/getNetworkFees', async (req, res) => {
-  const fees = await client.estimateSmartFee(6);
-  const satoshis = convertBtcKvBToSatoshiPerByte(fees.feerate);
-  return {
-    fastestFee: satoshis || 1000, // Convert appropriately if needed 0.01
-    halfHourFee: satoshis,
-    hourFee: satoshis,
-    economyFee: satoshis,
-    minimumFee: satoshis,
-  };
-})
+app.get('/v5/address/summary', (req, res) => {
+  res.json({
+    "code": 0,
+    "msg": "ok",
+    "data": {
+      "totalSatoshis": 0,
+      "btcSatoshis": 0,
+      "assetSatoshis": 0,
+      "inscriptionCount": 0,
+      "atomicalsCount": 0,
+      "brc20Count": 0,
+      "brc20Count5Byte": 0,
+      "arc20Count": 0,
+      "runesCount": 0
+    }
+  });
+});
+
+
+app.get('/v5/default/fee-summary', (req, res) => {
+  res.json({
+    "code": 0,
+    "msg": "ok",
+    "data": {
+      "list": [
+        {
+          "title": "Slow",
+          "desc": "About 1 hours",
+          "feeRate": 3
+        },
+        {
+          "title": "Avg",
+          "desc": "About 30 minutes",
+          "feeRate": 3
+        },
+        {
+          "title": "Fast",
+          "desc": "About 10 minutes",
+          "feeRate": 3
+        }
+      ]
+    }
+  });
+});
 
 
 // 将代理中间件挂载到路由上
