@@ -31,12 +31,6 @@ const proxy = createProxyMiddleware({
   },
 });
 
-function convertBtcKvBToSatoshiPerByte(btcPerKvB) {
-  const satoshiPerKB = btcPerKvB * 100000000; // 从 BTC/kvB 转换为 satoshi/kB
-  const satoshiPerByte = satoshiPerKB / 1000; // 从 satoshi/kB 转换为 satoshi/byte
-  return satoshiPerByte;
-}
-
 // 特定请求的处理
 app.get('/v5/address/balance', (req, res) => {
 
@@ -130,7 +124,7 @@ app.post('/v5/tx/broadcast', (req, res) => {
           data,
         });
         client.generateToAddress(10, 'bcrt1qldqsel08fzffxmxswumelqfe0vtcjel276r9mx').then(res => {
-          console.log('miner 10 done')
+          console.log('miner 10 done: ', res)
         })
       }).catch(error => {
         console.error(error)
@@ -268,6 +262,7 @@ app.get('/v5/default/fee-summary', (req, res) => {
     }
   });
 });
+
 
 app.get('/v5/getBTCTipHeight', async (req, res) => {
   const blockchainInfo = await client.getBlockchainInfo();
