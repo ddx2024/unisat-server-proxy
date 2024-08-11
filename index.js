@@ -81,7 +81,16 @@ app.get('/v5/address/btc-utxo', (req, res) => {
       const data = response.unspents.map(item => {
         return {
           ...item,
-          value: Math.round(item.amount * 1e8),
+          "txid": item.txid,
+          "vout": item.vout,
+          "satoshis": Math.round(item.amount * 100000000),
+          "scriptPk": item.scriptPubKey,
+          "addressType": 1,
+          "inscriptions": [],
+          "atomicals": [],
+          "runes": [],
+          "pubkey": "",
+          "height": item.height
         }
       })
       res.json({
