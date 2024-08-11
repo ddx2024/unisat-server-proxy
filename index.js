@@ -282,22 +282,22 @@ app.get('/v5/getNetworkFees', async (req, res) => {
 });
 
 
-app.get('/getBTCTipHeight', async (req, res) => {
-  const blockchainInfo = await client.getBlockchainInfo();
-  return res.text(blockchainInfo.blocks);
-})
-
-app.get('/getNetworkFees', async (req, res) => {
-  const fees = await client.estimateSmartFee(6);
-  const satoshis = convertBtcKvBToSatoshiPerByte(fees.feerate);
-  return {
-    fastestFee: satoshis || 1000, // Convert appropriately if needed 0.01
-    halfHourFee: satoshis,
-    hourFee: satoshis,
-    economyFee: satoshis,
-    minimumFee: satoshis,
-  };
-})
+// app.get('/getBTCTipHeight', async (req, res) => {
+//   const blockchainInfo = await client.getBlockchainInfo();
+//   return res.text(blockchainInfo.blocks);
+// })
+//
+// app.get('/getNetworkFees', async (req, res) => {
+//   const fees = await client.estimateSmartFee(6);
+//   const satoshis = convertBtcKvBToSatoshiPerByte(fees.feerate);
+//   return {
+//     fastestFee: satoshis || 1000, // Convert appropriately if needed 0.01
+//     halfHourFee: satoshis,
+//     hourFee: satoshis,
+//     economyFee: satoshis,
+//     minimumFee: satoshis,
+//   };
+// })
 
 function convertBtcKvBToSatoshiPerByte(btcPerKvB) {
   const satoshiPerKB = btcPerKvB * 100000000; // 从 BTC/kvB 转换为 satoshi/kB
