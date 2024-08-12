@@ -260,28 +260,39 @@ app.get('/v5/default/fee-summary', (req, res) => {
   });
 });
 
-app.get('/v5/getBTCTipHeight', async (req, res) => {
-  const blockchainInfo = await client.getBlockchainInfo();
-  return res.text(blockchainInfo.blocks);
-})
-
-app.get('/v5/getNetworkFees', async (req, res) => {
-  const fees = await client.estimateSmartFee(6);
-  const satoshis = convertBtcKvBToSatoshiPerByte(fees.feerate);
-  return {
-    fastestFee: satoshis || 1000, // Convert appropriately if needed 0.01
-    halfHourFee: satoshis,
-    hourFee: satoshis,
-    economyFee: satoshis,
-    minimumFee: satoshis,
-  };
+app.get('/regtest/api/getBTCTipHeight', async (req, res) => {
+  try {
+    const blockchainInfo = await client.getBlockchainInfo();
+    res.send(blockchainInfo.blocks.toString()); // Return the block height as plain text
+  } catch (error) {
+    console.error('Error fetching blockchain info:', error);
+    res.status(500).send('Error fetching blockchain info');
+  }
 });
 
+app.get('/regtest/api/tx/:txid', async (req, res) => {
+  const txid = req.params.txid;  // Get the txid from the query parameters
 
-app.get('/getBTCTipHeight', async (req, res) => {
-  const blockchainInfo = await client.getBlockchainInfo();
-  return res.text(blockchainInfo.blocks);
-})
+  if (!txid) {
+    return res.status(400).send('Txid is required');
+  }
+
+  try {
+    // Fetch the raw transaction data
+    const rawTransaction = await client.getRawTransaction(txid, true);  // The second parameter `true` indicates you want the verbose output
+    res.json({
+      code: 0,
+      msg: "ok",
+      data: rawTransaction
+    });
+  } catch (error) {
+    console.error('Error fetching transaction data:', error);
+    if (error.message.includes('No such mempool or blockchain transaction')) {
+      return res.status(404).send('Transaction not found');
+    }
+    res.status(500).send('Error fetching transaction data');
+  }
+});
 
 app.get('/getNetworkFees', async (req, res) => {
   const fees = await client.estimateSmartFee(6);
