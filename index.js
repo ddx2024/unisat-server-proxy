@@ -31,12 +31,6 @@ const proxy = createProxyMiddleware({
   },
 });
 
-function convertBtcKvBToSatoshiPerByte(btcPerKvB) {
-  const satoshiPerKB = btcPerKvB * 100000000; // 从 BTC/kvB 转换为 satoshi/kB
-  const satoshiPerByte = satoshiPerKB / 1000; // 从 satoshi/kB 转换为 satoshi/byte
-  return satoshiPerByte;
-}
-
 // 特定请求的处理
 app.get('/v5/address/balance', (req, res) => {
 
@@ -80,6 +74,16 @@ app.get('/v5/address/btc-utxo', (req, res) => {
     if (response && response.unspents) {
       const data = response.unspents.map(item => {
         return {
+          "txid": item.txid,
+          "vout": item.vout,
+          "satoshis": Math.round(item.amount * 100000000),
+          "scriptPk": item.scriptPubKey,
+          "addressType": 1,
+          "inscriptions": [],
+          "atomicals": [],
+          "runes": [],
+          "pubkey": "",
+          "height": item.height,
           ...item,
           value: Math.round(item.amount * 1e8),
         }
@@ -121,7 +125,7 @@ app.post('/v5/tx/broadcast', (req, res) => {
           data,
         });
         client.generateToAddress(10, 'bcrt1qldqsel08fzffxmxswumelqfe0vtcjel276r9mx').then(res => {
-          console.log('miner 10 done')
+          console.log('miner 10 done: ', res)
         })
       }).catch(error => {
         console.error(error)
@@ -294,7 +298,7 @@ app.get('/regtest/api/tx/:txid', async (req, res) => {
   }
 });
 
-app.get('/getNetworkFees', async (req, res) => {
+app.get('/regtest/api/getNetworkFees', async (req, res) => {
   const fees = await client.estimateSmartFee(6);
   const satoshis = convertBtcKvBToSatoshiPerByte(fees.feerate);
   return {
@@ -305,6 +309,7 @@ app.get('/getNetworkFees', async (req, res) => {
     minimumFee: satoshis,
   };
 })
+
 
 function convertBtcKvBToSatoshiPerByte(btcPerKvB) {
   const satoshiPerKB = btcPerKvB * 100000000; // 从 BTC/kvB 转换为 satoshi/kB
