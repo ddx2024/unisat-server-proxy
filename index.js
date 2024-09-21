@@ -5,10 +5,10 @@ const https = require('https')
 const cors = require('cors');
 const client = new Client({
   network: 'regtest'
-  , port: 18443
-  , host: 'ec2-3-15-141-150.us-east-2.compute.amazonaws.com'
-  , username: '111111'
-  , password: '111111'
+  , port: 8332
+  , host: '34.209.142.125'
+  , username: 'test'
+  , password: 'test'
 });
 const app = express();
 app.use(cors());
@@ -124,8 +124,8 @@ app.post('/v5/tx/broadcast', (req, res) => {
           "msg": "ok",
           data,
         });
-        client.generateToAddress(10, 'bcrt1qldqsel08fzffxmxswumelqfe0vtcjel276r9mx').then(res => {
-          console.log('miner 10 done: ', res)
+        client.generateToAddress(6, 'bcrt1qsj504vw7d79el9k5m8ml5vpuphzhg22wyv5yyc').then(res => {
+          console.log('miner 6 done: ', res)
         })
       }).catch(error => {
         console.error(error)
