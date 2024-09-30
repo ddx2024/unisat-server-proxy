@@ -3,12 +3,19 @@ const {createProxyMiddleware} = require('http-proxy-middleware');
 const Client = require('bitcoin-core');
 const https = require('https')
 const cors = require('cors');
+require('dotenv').config();
+
+const BITCOIN_PORT = process.env.BITCOIN_PORT || 3000;
+const BITCOIN_HOST = process.env.BITCOIN_HOST || '34.209.142.125';
+const BITCOIN_USERNAME = process.env.BITCOIN_USERNAME || 'test';
+const BITCOIN_PASSWORD = process.env.BITCOIN_PASSWORD || 'test';
+console.log('BITCOIN_PORT: ', BITCOIN_PORT)
 const client = new Client({
   network: 'regtest'
-  , port: 8332
-  , host: '34.209.142.125'
-  , username: 'test'
-  , password: 'test'
+  , port: BITCOIN_PORT
+  , host: BITCOIN_HOST
+  , username: BITCOIN_USERNAME
+  , password: BITCOIN_PASSWORD
 });
 const app = express();
 app.use(cors());
