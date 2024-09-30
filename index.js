@@ -328,7 +328,10 @@ function convertBtcKvBToSatoshiPerByte(btcPerKvB) {
 app.use('/v5', proxy);
 app.use(express.json());
 
+
+const HTTP_PORT = process.env.HTTP_PORT || 4000;
+
 // 启动服务器
-app.listen(3009, () => {
-  console.log('Proxy server is running on port 3009');
+app.listen(Number(HTTP_PORT), () => {
+  console.log(`Proxy server is running on port ${HTTP_PORT}`);
 });
