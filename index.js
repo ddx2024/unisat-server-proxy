@@ -5,11 +5,14 @@ const https = require('https')
 const cors = require('cors');
 require('dotenv').config();
 
-const BITCOIN_PORT = process.env.BITCOIN_PORT || 3000;
+const BITCOIN_PORT = process.env.BITCOIN_PORT || 18443;
 const BITCOIN_HOST = process.env.BITCOIN_HOST || '34.209.142.125';
 const BITCOIN_USERNAME = process.env.BITCOIN_USERNAME || 'test';
 const BITCOIN_PASSWORD = process.env.BITCOIN_PASSWORD || 'test';
 console.log('BITCOIN_PORT: ', BITCOIN_PORT)
+console.log('BITCOIN_HOST: ', BITCOIN_HOST)
+console.log('BITCOIN_USERNAME: ', BITCOIN_USERNAME)
+console.log('BITCOIN_PASSWORD: ', BITCOIN_PASSWORD)
 const client = new Client({
   network: 'regtest'
   , port: BITCOIN_PORT
@@ -329,7 +332,7 @@ app.use('/v5', proxy);
 app.use(express.json());
 
 
-const HTTP_PORT = process.env.HTTP_PORT || 4000;
+const HTTP_PORT = process.env.HTTP_PORT || 3009;
 
 // 启动服务器
 app.listen(Number(HTTP_PORT), () => {
