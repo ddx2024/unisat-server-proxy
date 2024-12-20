@@ -9,10 +9,14 @@ const BITCOIN_PORT = process.env.BITCOIN_PORT || 18443;
 const BITCOIN_HOST = process.env.BITCOIN_HOST || '34.209.142.125';
 const BITCOIN_USERNAME = process.env.BITCOIN_USERNAME || 'test';
 const BITCOIN_PASSWORD = process.env.BITCOIN_PASSWORD || 'test';
+const BITCOIN_AUTOMATIC_MINING = process.env.BITCOIN_AUTOMATIC_MINING || '1';
+const BITCOIN_AUTOMATIC_MINING_BLOCK = process.env.BITCOIN_AUTOMATIC_MINING || '6';
 console.log('BITCOIN_PORT: ', BITCOIN_PORT)
 console.log('BITCOIN_HOST: ', BITCOIN_HOST)
 console.log('BITCOIN_USERNAME: ', BITCOIN_USERNAME)
 console.log('BITCOIN_PASSWORD: ', BITCOIN_PASSWORD)
+console.log('BITCOIN_AUTOMATIC_MINING: ', BITCOIN_AUTOMATIC_MINING)
+console.log('BITCOIN_AUTOMATIC_MINING_BLOCK: ', BITCOIN_AUTOMATIC_MINING_BLOCK)
 const client = new Client({
   network: 'regtest'
   , port: BITCOIN_PORT
@@ -134,9 +138,11 @@ app.post('/v5/tx/broadcast', (req, res) => {
           "msg": "ok",
           data,
         });
-        client.generateToAddress(6, 'bcrt1qsj504vw7d79el9k5m8ml5vpuphzhg22wyv5yyc').then(res => {
-          console.log('miner 6 done: ', res)
-        })
+        if (BITCOIN_AUTOMATIC_MINING == 1) {
+          client.generateToAddress(Number(BITCOIN_AUTOMATIC_MINING_BLOCK), 'bcrt1qsj504vw7d79el9k5m8ml5vpuphzhg22wyv5yyc').then(res => {
+            console.log(`miner ${Number(BITCOIN_AUTOMATIC_MINING_BLOCK)} done: `, res)
+          })
+        }
       }).catch(error => {
         console.error(error)
         res.json({
